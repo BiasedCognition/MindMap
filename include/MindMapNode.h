@@ -20,6 +20,8 @@ public:
     void setText(const QString& text);
     QString text() const;
     void setColor(const QColor& color);
+
+
     QColor color() const;
 
     // 子节点管理
