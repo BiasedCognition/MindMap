@@ -71,9 +71,9 @@ void MindMapScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
                 Connection* connection = new Connection(m_tempNode, endNode);
                 addItem(connection);
                 connection->updatePath();
-
+                
                 // 添加父子关系
-                m_tempNode->addChild(endNode);
+                // m_tempNode->addChild(endNode);
             }
         }
         m_tempNode = nullptr;
@@ -99,7 +99,7 @@ void MindMapScene::showNodeContextMenu(MindMapNode* node, const QPoint& screenPo
     if (selectedAction == editAction) {
         bool ok;
         QString text = QInputDialog::getText(nullptr, "编辑节点", "输入新内容:",
-                                             QLineEdit::Normal, node->text(), &ok);
+                                             QLineEdit::Normal, node->getText(), &ok);
         if (ok && !text.isEmpty()) {
             node->setText(text);
         }
@@ -112,22 +112,22 @@ void MindMapScene::showNodeContextMenu(MindMapNode* node, const QPoint& screenPo
         // 在实际应用中应使用颜色选择对话框
         node->setColor(QColor(rand() % 256, rand() % 256, rand() % 256));
     }
-    else if (selectedAction == addChildAction) {
-        bool ok;
-        QString text = QInputDialog::getText(nullptr, "添加子节点", "输入节点内容:",
-                                             QLineEdit::Normal, "子节点", &ok);
-        if (ok && !text.isEmpty()) {
-            MindMapNode* child = new MindMapNode(text);
-            addItem(child);
-            child->setPos(node->pos() + QPointF(200, 0));
+    // else if (selectedAction == addChildAction) {
+    //     bool ok;
+    //     QString text = QInputDialog::getText(nullptr, "添加子节点", "输入节点内容:",
+    //                                          QLineEdit::Normal, "子节点", &ok);
+    //     if (ok && !text.isEmpty()) {
+    //         MindMapNode* child = new MindMapNode(text);
+    //         addItem(child);
+    //         child->setPos(node->pos() + QPointF(200, 0));
 
-            Connection* connection = new Connection(node, child);
-            addItem(connection);
-            connection->updatePath();
+    //         Connection* connection = new Connection(node, child);
+    //         addItem(connection);
+    //         connection->updatePath();
 
-            node->addChild(child);
-        }
-    }
+    //         node->addChild(child);
+    //     }
+    // }
 }
 
 void MindMapScene::showSceneContextMenu(const QPoint& screenPos, const QPointF& scenePos)
@@ -158,14 +158,16 @@ void MindMapScene::showSceneContextMenu(const QPoint& screenPos, const QPointF& 
     }
 }
 
+
+// delete node and edges connect to it.
 void MindMapScene::removeNode(MindMapNode* node)
 {
     if (!node) return;
 
     // 递归删除子节点
-    for (MindMapNode* child : node->children()) {
-        removeNode(child);
-    }
+    // for (MindMapNode* child : node->children()) {
+    //     removeNode(child);
+    // }
 
     // 删除连接
     QList<Connection*> connections = node->connections();
@@ -174,11 +176,11 @@ void MindMapScene::removeNode(MindMapNode* node)
         delete connection;
     }
 
-    // 从父节点中移除
-    if (node->parentItem()) {
-        MindMapNode* parent = static_cast<MindMapNode*>(node->parentItem());
-        parent->removeChild(node);
-    }
+    // // 从父节点中移除
+    // if (node->parentItem()) {
+    //     MindMapNode* parent = static_cast<MindMapNode*>(node->parentItem());
+    //     parent->removeChild(node);
+    // }
 
     // 删除节点本身
     removeItem(node);

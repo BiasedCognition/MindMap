@@ -13,6 +13,12 @@ Connection::Connection(MindMapNode* source, MindMapNode* destination, QGraphicsI
     if (m_destination) m_destination->addConnection(this);
 }
 
+Connection::~Connection()
+{
+    m_source->removeConnection(this);
+    m_destination->removeConnection(this);
+}
+
 void Connection::updatePath()
 {
     if (!m_source || !m_destination) return;

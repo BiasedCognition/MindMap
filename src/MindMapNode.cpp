@@ -53,7 +53,7 @@ void MindMapNode::setText(const QString& text)
     update();
 }
 
-QString MindMapNode::text() const
+QString MindMapNode::getText() const
 {
     return m_text;
 }
@@ -64,29 +64,13 @@ void MindMapNode::setColor(const QColor& color)
     update();
 }
 
-QColor MindMapNode::color() const
+QColor MindMapNode::getColor() const
 {
     return m_color;
 }
 
-void MindMapNode::addChild(MindMapNode* child)
-{
-    if (!m_children.contains(child)) {
-        m_children.append(child);
-    }
-}
 
-void MindMapNode::removeChild(MindMapNode* child)
-{
-    m_children.removeAll(child);
-}
-
-QList<MindMapNode*> MindMapNode::children() const
-{
-    return m_children;
-}
-
-void MindMapNode::addConnection(Connection* connection)
+void MindMapNode::addConnection(Connection *connection)
 {
     if (!m_connections.contains(connection)) {
         m_connections.append(connection);
@@ -111,7 +95,7 @@ QVariant MindMapNode::itemChange(GraphicsItemChange change, const QVariant& valu
             connection->updatePath();
         }
         // 更新子节点位置
-        for (MindMapNode* child : m_children) {
+        for (MindMapNode* child : m_concatedNodes) {
             child->update();
         }
     }
