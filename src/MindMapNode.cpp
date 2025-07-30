@@ -36,7 +36,7 @@ void MindMapNode::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 
     painter->setBrush(gradient);
     painter->setPen(QPen(isSelected() ? Qt::blue : Qt::darkGray, isSelected() ? 2 : 1));
-    painter->drawRoundedRect(rect, 10, 10);
+    painter->drawRoundedRect(rect, 100, 100);
 
     painter->setPen(Qt::black);
     painter->drawText(rect, Qt::AlignCenter, m_text);

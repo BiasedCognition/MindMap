@@ -7,7 +7,7 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QInputDialog>
-
+#include <string>
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
@@ -26,31 +26,29 @@ MainWindow::MainWindow(QWidget* parent)
     resize(1000, 700);
 }
 
+MainWindow::~MainWindow() {
+}
+
 void MainWindow::createActions()
 {
-    m_addNodeAction = new QAction("添加节点", this);
+    m_addNodeAction = new QAction("添加模式", this);
     connect(m_addNodeAction, &QAction::triggered, this, [this]() {
         m_scene->setMode(MindMapScene::AddNode);
-        statusBar()->showMessage("添加节点模式: 在场景中点击添加节点", 3000);
+        statusBar()->showMessage("添加节点模式: 在场景中点击添加节点", 0);
     });
 
-    m_addConnectionAction = new QAction("连接节点", this);
+    m_addConnectionAction = new QAction("连接模式", this);
     connect(m_addConnectionAction, &QAction::triggered, this, [this]() {
         m_scene->setMode(MindMapScene::AddConnection);
-        statusBar()->showMessage("连接模式: 先点击源节点，再点击目标节点", 3000);
+        statusBar()->showMessage("连接节点模式: 在源节点按下鼠标，到目标节点松开", 0);
     });
 
-    m_deleteAction = new QAction("删除选中项", this);
-    connect(m_deleteAction, &QAction::triggered, this, [this]() {
-        for (QGraphicsItem* item : m_scene->selectedItems()) {
-            if (item->type() == MindMapNode::Type) {
-                m_scene->removeNode(static_cast<MindMapNode*>(item));
-            } else {
-                m_scene->removeItem(item);
-                delete item;
-            }
-        }
+    m_dragAction = new QAction("拖动模式", this);
+    connect(m_dragAction, &QAction::triggered, this, [this](){
+        m_scene->setMode(MindMapScene::None);
+        statusBar()->showMessage("拖动模式", 0);
     });
+
 
     m_clearAction = new QAction("清空场景", this);
     connect(m_clearAction, &QAction::triggered, m_scene, &QGraphicsScene::clear);
@@ -59,9 +57,9 @@ void MainWindow::createActions()
 void MainWindow::createToolBar()
 {
     QToolBar* toolBar = addToolBar("操作");
+    toolBar->addAction(m_dragAction);
     toolBar->addAction(m_addNodeAction);
     toolBar->addAction(m_addConnectionAction);
-    toolBar->addAction(m_deleteAction);
     toolBar->addAction(m_clearAction);
 }
 

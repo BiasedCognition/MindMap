@@ -13,7 +13,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
     explicit MainWindow(QWidget* parent = nullptr);
-
+    ~MainWindow();
 protected:
     void keyPressEvent(QKeyEvent* event) override;
 
@@ -27,7 +27,7 @@ private:
 
     QAction* m_addNodeAction;
     QAction* m_addConnectionAction;
-    QAction* m_deleteAction;
+    QAction* m_dragAction;
     QAction* m_clearAction;
 };
 
