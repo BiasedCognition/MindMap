@@ -5,16 +5,22 @@
 #include <QFontMetrics>
 #include <QLinearGradient>
 #include <QPen>
-#include <QStyleOptionGraphicsItem>
 #include <QStyle>
+#include <QDir>
 
-MindMapNode::MindMapNode(const QString& text, QGraphicsItem* parent)
-    : QGraphicsItem(parent), m_text(text), m_color(QColor(135, 206, 250))
+MindMapNode::MindMapNode(const QString& text, const QString& path, QGraphicsItem* parent)
+    : QGraphicsItem(parent), m_text(text), m_folderPath(path), m_color(QColor(135, 206, 250))
 {
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);
     setAcceptHoverEvents(true);
+
+    // 确保文件夹存在
+    if (!m_folderPath.isEmpty()) {
+        QDir dir(m_folderPath);
+        dir.mkpath(".");
+    }
 }
 
 QRectF MindMapNode::boundingRect() const
@@ -30,9 +36,13 @@ void MindMapNode::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
     Q_UNUSED(widget);
 
     QRectF rect = boundingRect();
+
+    // 根节点使用不同的颜色
+    QColor nodeColor = isRoot() ? QColor(255, 165, 0) : m_color;
+
     QLinearGradient gradient(rect.topLeft(), rect.bottomRight());
-    gradient.setColorAt(0, m_color.lighter(120));
-    gradient.setColorAt(1, m_color);
+    gradient.setColorAt(0, nodeColor.lighter(120));
+    gradient.setColorAt(1, nodeColor);
 
     painter->setBrush(gradient);
     painter->setPen(QPen(isSelected() ? Qt::blue : Qt::darkGray, isSelected() ? 2 : 1));
@@ -69,10 +79,32 @@ QColor MindMapNode::color() const
     return m_color;
 }
 
+void MindMapNode::setFolderPath(const QString& path)
+{
+    m_folderPath = path;
+}
+
+QString MindMapNode::folderPath() const
+{
+    return m_folderPath;
+}
+
+QDir MindMapNode::directory() const
+{
+    return QDir(m_folderPath);
+}
+
 void MindMapNode::addChild(MindMapNode* child)
 {
     if (!m_children.contains(child)) {
         m_children.append(child);
+
+        // 设置子节点的文件夹路径
+        if (!m_folderPath.isEmpty()) {
+            QDir dir(m_folderPath);
+            dir.mkpath(child->text());
+            child->setFolderPath(dir.filePath(child->text()));
+        }
     }
 }
 
@@ -84,6 +116,20 @@ void MindMapNode::removeChild(MindMapNode* child)
 QList<MindMapNode*> MindMapNode::children() const
 {
     return m_children;
+}
+
+MindMapNode* MindMapNode::parentNode() const
+{
+    QGraphicsItem* parent = parentItem();
+    if (parent && parent->type() == MindMapNode::Type) {
+        return static_cast<MindMapNode*>(parent);
+    }
+    return nullptr;
+}
+
+bool MindMapNode::isRoot() const
+{
+    return parentNode() == nullptr;
 }
 
 void MindMapNode::addConnection(Connection* connection)

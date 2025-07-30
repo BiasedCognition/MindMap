@@ -7,15 +7,13 @@
 class QGraphicsView;
 class QToolBar;
 class QAction;
+class QStatusBar;
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
     explicit MainWindow(QWidget* parent = nullptr);
-
-protected:
-    void keyPressEvent(QKeyEvent* event) override;
 
 private:
     void createActions();
@@ -25,10 +23,12 @@ private:
     MindMapScene* m_scene;
     QGraphicsView* m_view;
 
-    QAction* m_addNodeAction;
-    QAction* m_addConnectionAction;
+    QAction* m_newAction;
+    QAction* m_openAction;
+    QAction* m_saveAction;
     QAction* m_deleteAction;
-    QAction* m_clearAction;
+    QAction* m_zoomInAction;
+    QAction* m_zoomOutAction;
 };
 
 #endif // MAINWINDOW_H

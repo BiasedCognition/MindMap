@@ -7,6 +7,8 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QFileDialog>
+#include <QApplication>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -22,65 +24,79 @@ MainWindow::MainWindow(QWidget* parent)
     createStatusBar();
 
     // 设置窗口属性
-    setWindowTitle("Qt6 思维导图");
-    resize(1000, 700);
+    setWindowTitle("严格树状结构思维导图");
+    resize(1200, 800);
+
+    // 初始提示
+    QMessageBox::information(this, "欢迎", "请新建或打开一个思维导图文件开始");
 }
 
 void MainWindow::createActions()
 {
-    m_addNodeAction = new QAction("添加节点", this);
-    connect(m_addNodeAction, &QAction::triggered, this, [this]() {
-        m_scene->setMode(MindMapScene::AddNode);
-        statusBar()->showMessage("添加节点模式: 在场景中点击添加节点", 3000);
-    });
-
-    m_addConnectionAction = new QAction("连接节点", this);
-    connect(m_addConnectionAction, &QAction::triggered, this, [this]() {
-        m_scene->setMode(MindMapScene::AddConnection);
-        statusBar()->showMessage("连接模式: 先点击源节点，再点击目标节点", 3000);
-    });
-
-    m_deleteAction = new QAction("删除选中项", this);
-    connect(m_deleteAction, &QAction::triggered, this, [this]() {
-        for (QGraphicsItem* item : m_scene->selectedItems()) {
-            if (item->type() == MindMapNode::Type) {
-                m_scene->removeNode(static_cast<MindMapNode*>(item));
-            } else {
-                m_scene->removeItem(item);
-                delete item;
+    m_newAction = new QAction("新建", this);
+    connect(m_newAction, &QAction::triggered, this, [this]() {
+        QString path = QFileDialog::getExistingDirectory(this, "选择根文件夹");
+        if (!path.isEmpty()) {
+            if (m_scene->createNewMap(path)) {
+                statusBar()->showMessage("已创建新思维导图: " + path, 3000);
             }
         }
     });
 
-    m_clearAction = new QAction("清空场景", this);
-    connect(m_clearAction, &QAction::triggered, m_scene, &QGraphicsScene::clear);
+    m_openAction = new QAction("打开", this);
+    connect(m_openAction, &QAction::triggered, this, [this]() {
+        QString path = QFileDialog::getExistingDirectory(this, "选择思维导图根文件夹");
+        if (!path.isEmpty()) {
+            if (m_scene->openMap(path)) {
+                statusBar()->showMessage("已打开思维导图: " + path, 3000);
+            }
+        }
+    });
+
+    m_saveAction = new QAction("保存", this);
+    connect(m_saveAction, &QAction::triggered, this, [this]() {
+        if (m_scene->saveMap()) {
+            statusBar()->showMessage("思维导图已保存", 3000);
+        }
+    });
+
+    m_deleteAction = new QAction("删除节点", this);
+    connect(m_deleteAction, &QAction::triggered, this, [this]() {
+        for (QGraphicsItem* item : m_scene->selectedItems()) {
+            if (item->type() == MindMapNode::Type) {
+                MindMapNode* node = static_cast<MindMapNode*>(item);
+                if (!node->isRoot()) {
+                    m_scene->removeNode(node);
+                }
+            }
+        }
+    });
+
+    m_zoomInAction = new QAction("放大", this);
+    connect(m_zoomInAction, &QAction::triggered, this, [this]() {
+        m_view->scale(1.2, 1.2);
+    });
+
+    m_zoomOutAction = new QAction("缩小", this);
+    connect(m_zoomOutAction, &QAction::triggered, this, [this]() {
+        m_view->scale(0.8, 0.8);
+    });
 }
 
 void MainWindow::createToolBar()
 {
     QToolBar* toolBar = addToolBar("操作");
-    toolBar->addAction(m_addNodeAction);
-    toolBar->addAction(m_addConnectionAction);
+    toolBar->addAction(m_newAction);
+    toolBar->addAction(m_openAction);
+    toolBar->addAction(m_saveAction);
+    toolBar->addSeparator();
     toolBar->addAction(m_deleteAction);
-    toolBar->addAction(m_clearAction);
+    toolBar->addSeparator();
+    toolBar->addAction(m_zoomInAction);
+    toolBar->addAction(m_zoomOutAction);
 }
 
 void MainWindow::createStatusBar()
 {
     statusBar()->showMessage("就绪");
-}
-
-void MainWindow::keyPressEvent(QKeyEvent* event)
-{
-    if (event->key() == Qt::Key_Delete) {
-        for (QGraphicsItem* item : m_scene->selectedItems()) {
-            if (item->type() == MindMapNode::Type) {
-                m_scene->removeNode(static_cast<MindMapNode*>(item));
-            } else {
-                m_scene->removeItem(item);
-                delete item;
-            }
-        }
-    }
-    QMainWindow::keyPressEvent(event);
 }

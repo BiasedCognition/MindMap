@@ -4,13 +4,15 @@
 #include <QGraphicsItem>
 #include <QColor>
 #include <QList>
+#include <QStyleOption>
+#include <QDir>
 
 class Connection;
 
 class MindMapNode : public QGraphicsItem
 {
 public:
-    explicit MindMapNode(const QString& text, QGraphicsItem* parent = nullptr);
+    explicit MindMapNode(const QString& text, const QString& path, QGraphicsItem* parent = nullptr);
 
     // 重写图形项接口
     QRectF boundingRect() const override;
@@ -20,9 +22,12 @@ public:
     void setText(const QString& text);
     QString text() const;
     void setColor(const QColor& color);
-
-
     QColor color() const;
+
+    // 文件夹路径操作
+    void setFolderPath(const QString& path);
+    QString folderPath() const;
+    QDir directory() const;
 
     // 子节点管理
     void addChild(MindMapNode* child);
@@ -34,6 +39,10 @@ public:
     void removeConnection(Connection* connection);
     QList<Connection*> connections() const;
 
+    // 节点关系
+    MindMapNode* parentNode() const;
+    bool isRoot() const;
+
     // 类型标识
     enum { Type = UserType + 1 };
     int type() const override { return Type; }
@@ -44,6 +53,7 @@ protected:
 private:
     QString m_text;
     QColor m_color;
+    QString m_folderPath;
     QList<MindMapNode*> m_children;
     QList<Connection*> m_connections;
 };
