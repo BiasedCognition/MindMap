@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <QGraphicsItem>
 #include <QStyle>
+#include <queue>
 
 MindMapScene::MindMapScene(QObject* parent)
     : QGraphicsScene(parent), m_mode(None), m_tempNode(nullptr)
@@ -164,8 +165,59 @@ void MindMapScene::removeNode(MindMapNode* node)
         removeItem(connection);
         delete connection;
     }
-
+    
     // 删除节点本身
     removeItem(node);
     delete node;
+}
+
+
+
+#include<iostream>
+void MindMapScene::genSceneFromFolder(std::string folder_path){
+    std::filesystem::directory_entry folder(folder_path);
+    using di = std::filesystem::directory_iterator;
+    namespace fs = std::filesystem;
+    using queue = std::queue<std::pair<fs::directory_entry,MindMapNode*>>;
+    queue bfs_queue;
+    
+    if(folder.exists() && !folder.is_directory()){
+        return;
+    }
+    try {
+        auto parentNode = addNode(QString(folder.path().c_str()));
+        parentNode->setColor(QColor(2,20,102));
+
+        bfs_queue.push({folder,parentNode});
+        while(!bfs_queue.empty()){
+            const auto parent = bfs_queue.front();
+            for(auto sub : di(parent.first)){
+                auto childNode = addNode(QString(sub.path().stem().c_str()));
+
+                double theta = (rand() % 360) * M_PI / 180.0;
+                childNode->setPos(parent.second->pos()+300*QPointF(cos(theta),sin(theta)));
+                
+                if(sub.is_directory()){
+                    bfs_queue.push({sub,childNode});
+                    childNode->setColor(QColor(0,102,204));
+                } else {
+                    // dosth.
+                }
+                auto edge = new Connection(parent.second,childNode);
+                addItem(edge);
+                edge->updatePath();
+            }
+            bfs_queue.pop(); 
+
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "目录迭代失败: " << e.what() 
+                  << "\n - 路径: " << e.path1() 
+                  << "\n - 错误码: " << e.code().message() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "标准异常: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "未知异常类型" << std::endl;
+    } 
+    return;
 }

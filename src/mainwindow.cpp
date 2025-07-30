@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget* parent)
     // 创建场景和视图
     m_scene = new MindMapScene(this);
     m_view = new QGraphicsView(m_scene);
+    m_scene->genSceneFromFolder("C:/msys64");
     setCentralWidget(m_view);
 
     // 创建界面元素

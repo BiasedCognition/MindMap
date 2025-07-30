@@ -3,6 +3,7 @@
 
 #include <QGraphicsScene>
 #include <QObject>
+#include <filesystem>
 #include "MindMapNode.h"
 
 class MindMapScene : public QGraphicsScene
@@ -15,7 +16,10 @@ public:
 
     void setMode(Mode mode) { m_mode = mode; }
 
+    MindMapNode* addNode(const QString& name);
     void removeNode(MindMapNode* node);
+    
+    void genSceneFromFolder(std::string folder);
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
