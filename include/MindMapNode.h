@@ -18,17 +18,17 @@ public:
 
     // 节点操作
     void setText(const QString& text);
-    QString text() const;
+    QString getText() const;
+
     void setColor(const QColor& color);
+    QColor getColor() const;
 
 
-    QColor color() const;
+    // ? Modification Explain
+    // 由于思维导图不总是树，使用父-子关系管理并不恰当。
+    
 
-    // 子节点管理
-    void addChild(MindMapNode* child);
-    void removeChild(MindMapNode* child);
-    QList<MindMapNode*> children() const;
-
+    // TODO 由于思维导图并不总为简单图，此处也应修改。
     // 连接管理
     void addConnection(Connection* connection);
     void removeConnection(Connection* connection);
@@ -44,7 +44,7 @@ protected:
 private:
     QString m_text;
     QColor m_color;
-    QList<MindMapNode*> m_children;
+    QList<MindMapNode*> m_concatedNodes;
     QList<Connection*> m_connections;
 };
 

@@ -7,8 +7,8 @@
 class Connection : public QGraphicsPathItem
 {
 public:
-    Connection(MindMapNode* source, MindMapNode* destination, QGraphicsItem* parent = nullptr);
-
+    explicit Connection(MindMapNode* source, MindMapNode* destination, QGraphicsItem* parent = nullptr);
+    ~Connection();
     void updatePath();
 
     MindMapNode* sourceNode() const { return m_source; }
