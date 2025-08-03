@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget* parent)
     createStatusBar();
 
     // 设置窗口属性
-    setWindowTitle("严格树状结构思维导图");
+    setWindowTitle("树状结构思维导图 - 带折叠功能");
     resize(1200, 800);
 
     // 初始提示
@@ -67,6 +67,7 @@ void MainWindow::createActions()
                 MindMapNode* node = static_cast<MindMapNode*>(item);
                 if (!node->isRoot()) {
                     m_scene->removeNode(node);
+                    m_scene->updateLayout();
                 }
             }
         }
@@ -81,6 +82,22 @@ void MainWindow::createActions()
     connect(m_zoomOutAction, &QAction::triggered, this, [this]() {
         m_view->scale(0.8, 0.8);
     });
+
+    m_expandAllAction = new QAction("全部展开", this);
+    connect(m_expandAllAction, &QAction::triggered, this, [this]() {
+        if (m_scene->rootNode()) {
+            m_scene->recursiveSetExpanded(m_scene->rootNode(), true);
+            m_scene->updateLayout();
+        }
+    });
+
+    m_collapseAllAction = new QAction("全部折叠", this);
+    connect(m_collapseAllAction, &QAction::triggered, this, [this]() {
+        if (m_scene->rootNode()) {
+            m_scene->recursiveSetExpanded(m_scene->rootNode(), false);
+            m_scene->updateLayout();
+        }
+    });
 }
 
 void MainWindow::createToolBar()
@@ -91,6 +108,9 @@ void MainWindow::createToolBar()
     toolBar->addAction(m_saveAction);
     toolBar->addSeparator();
     toolBar->addAction(m_deleteAction);
+    toolBar->addSeparator();
+    toolBar->addAction(m_expandAllAction);
+    toolBar->addAction(m_collapseAllAction);
     toolBar->addSeparator();
     toolBar->addAction(m_zoomInAction);
     toolBar->addAction(m_zoomOutAction);

@@ -15,6 +15,7 @@
 #include <QJsonDocument>
 #include <QFile>
 #include <QByteArray>
+#include <QGraphicsView>
 
 MindMapScene::MindMapScene(QObject* parent)
     : QGraphicsScene(parent), m_rootNode(nullptr)
@@ -40,6 +41,7 @@ bool MindMapScene::createNewMap(const QString& path)
     m_rootNode->setPos(0, 0);
 
     m_mapPath = path;
+    updateLayout();
     return true;
 }
 
@@ -61,7 +63,10 @@ bool MindMapScene::openMap(const QString& path)
     addItem(m_rootNode);
     m_rootNode->setPos(0, 0);
 
+    // TODO: 递归加载子节点
+
     m_mapPath = path;
+    updateLayout();
     return true;
 }
 
@@ -75,6 +80,33 @@ bool MindMapScene::saveMap()
     // 在严格树状结构中，文件系统结构就是我们的保存格式
     // 这里可以添加元数据保存（如节点位置、颜色等）
     return true;
+}
+
+void MindMapScene::updateLayout()
+{
+    if (!m_rootNode) return;
+
+    // 重置所有节点位置
+    qreal y = 0;
+    recursiveLayout(m_rootNode, 0, y, 0);
+
+    // 更新视图
+    views().first()->centerOn(m_rootNode);
+}
+
+void MindMapScene::recursiveLayout(MindMapNode* node, qreal x, qreal& y, int depth)
+{
+    if (!node->isExpanded()) return;
+
+    // 设置当前节点位置
+    node->setPos(x, y);
+    y += 80; // 垂直间距
+
+    // 布局子节点
+    qreal childX = x + 200; // 水平缩进
+    for (MindMapNode* child : node->children()) {
+        recursiveLayout(child, childX, y, depth + 1);
+    }
 }
 
 void MindMapScene::mousePressEvent(QGraphicsSceneMouseEvent* event)
@@ -106,9 +138,6 @@ MindMapNode* MindMapScene::addChildNode(MindMapNode* parent, const QString& text
     MindMapNode* child = new MindMapNode(text, "");
     addItem(child);
 
-    // 设置位置（在父节点右侧）
-    child->setPos(parent->pos() + QPointF(200, 0));
-
     // 创建连接
     Connection* connection = new Connection(parent, child);
     addItem(connection);
@@ -116,6 +145,9 @@ MindMapNode* MindMapScene::addChildNode(MindMapNode* parent, const QString& text
 
     // 添加父子关系
     parent->addChild(child);
+
+    // 更新布局
+    updateLayout();
 
     return child;
 }
@@ -127,6 +159,22 @@ void MindMapScene::showNodeContextMenu(MindMapNode* node, const QPoint& screenPo
     QAction* editAction = menu.addAction("编辑节点");
     QAction* deleteAction = menu.addAction("删除节点");
     QAction* colorAction = menu.addAction("设置颜色");
+    menu.addSeparator();
+
+    // 折叠/展开操作
+    QAction* expandAction = nullptr;
+    QAction* collapseAction = nullptr;
+
+    if (!node->children().isEmpty()) {
+        if (node->isExpanded()) {
+            collapseAction = menu.addAction("折叠子节点");
+        } else {
+            expandAction = menu.addAction("展开子节点");
+        }
+
+        menu.addAction("切换折叠/展开");
+    }
+
     menu.addSeparator();
     QAction* addChildAction = menu.addAction("添加子节点");
     menu.addSeparator();
@@ -145,11 +193,13 @@ void MindMapScene::showNodeContextMenu(MindMapNode* node, const QPoint& screenPo
                                            QLineEdit::Normal, node->text(), &ok);
         if (ok && !text.isEmpty()) {
             node->setText(text);
+            updateLayout();
         }
     }
     else if (selectedAction == deleteAction && !node->isRoot()) {
         // 删除节点及其所有连接
         removeNode(node);
+        updateLayout();
     }
     else if (selectedAction == colorAction) {
         node->setColor(QColor(rand() % 256, rand() % 256, rand() % 256));
@@ -167,6 +217,18 @@ void MindMapScene::showNodeContextMenu(MindMapNode* node, const QPoint& screenPo
             QDesktopServices::openUrl(QUrl::fromLocalFile(node->folderPath()));
         }
     }
+    else if (selectedAction == expandAction) {
+        node->setExpanded(true);
+        updateLayout();
+    }
+    else if (selectedAction == collapseAction) {
+        node->setExpanded(false);
+        updateLayout();
+    }
+    else if (selectedAction && selectedAction->text() == "切换折叠/展开") {
+        node->toggleExpanded();
+        updateLayout();
+    }
 }
 
 void MindMapScene::showSceneContextMenu(const QPoint& screenPos, const QPointF& scenePos)
@@ -178,6 +240,9 @@ void MindMapScene::showSceneContextMenu(const QPoint& screenPos, const QPointF& 
     QAction* newAction = menu.addAction("新建思维导图");
     QAction* openAction = menu.addAction("打开思维导图");
     QAction* saveAction = menu.addAction("保存思维导图");
+    menu.addSeparator();
+    QAction* expandAllAction = menu.addAction("全部展开");
+    QAction* collapseAllAction = menu.addAction("全部折叠");
 
     QAction* selectedAction = menu.exec(screenPos);
 
@@ -195,6 +260,22 @@ void MindMapScene::showSceneContextMenu(const QPoint& screenPos, const QPointF& 
     }
     else if (selectedAction == saveAction) {
         saveMap();
+    }
+    else if (selectedAction == expandAllAction && m_rootNode) {
+        recursiveSetExpanded(m_rootNode, true);
+        updateLayout();
+    }
+    else if (selectedAction == collapseAllAction && m_rootNode) {
+        recursiveSetExpanded(m_rootNode, false);
+        updateLayout();
+    }
+}
+
+void MindMapScene::recursiveSetExpanded(MindMapNode* node, bool expanded)
+{
+    node->setExpanded(expanded);
+    for (MindMapNode* child : node->children()) {
+        recursiveSetExpanded(child, expanded);
     }
 }
 

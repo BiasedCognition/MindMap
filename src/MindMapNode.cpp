@@ -7,9 +7,11 @@
 #include <QPen>
 #include <QStyle>
 #include <QDir>
+#include <QGraphicsSceneMouseEvent>
 
 MindMapNode::MindMapNode(const QString& text, const QString& path, QGraphicsItem* parent)
-    : QGraphicsItem(parent), m_text(text), m_folderPath(path), m_color(QColor(135, 206, 250))
+    : QGraphicsItem(parent), m_text(text), m_folderPath(path), m_color(QColor(135, 206, 250)),
+      m_expanded(true) // 默认展开
 {
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
@@ -26,7 +28,7 @@ MindMapNode::MindMapNode(const QString& text, const QString& path, QGraphicsItem
 QRectF MindMapNode::boundingRect() const
 {
     QFontMetrics fm(QApplication::font());
-    int width = fm.horizontalAdvance(m_text) + 30;
+    int width = fm.horizontalAdvance(m_text) + 50; // 增加空间给展开按钮
     int height = fm.height() + 20;
     return QRectF(-width/2, -height/2, width, height);
 }
@@ -51,10 +53,62 @@ void MindMapNode::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
     painter->setPen(Qt::black);
     painter->drawText(rect, Qt::AlignCenter, m_text);
 
+    // 如果有子节点，绘制展开/折叠按钮
+    if (!m_children.isEmpty()) {
+        QRectF buttonRect = expandButtonRect();
+        painter->setBrush(Qt::white);
+        painter->drawRect(buttonRect);
+
+        painter->setPen(QPen(Qt::black, 2));
+        // 绘制减号（展开状态）或加号（折叠状态）
+        painter->drawLine(buttonRect.left() + 5, buttonRect.center().y(),
+                         buttonRect.right() - 5, buttonRect.center().y());
+        if (!m_expanded) {
+            painter->drawLine(buttonRect.center().x(), buttonRect.top() + 5,
+                             buttonRect.center().x(), buttonRect.bottom() - 5);
+        }
+    }
+
     if (option->state & QStyle::State_MouseOver) {
         painter->setBrush(QColor(255, 255, 255, 100));
         painter->drawRoundedRect(rect, 10, 10);
     }
+}
+
+QRectF MindMapNode::expandButtonRect() const
+{
+    QRectF rect = boundingRect();
+    return QRectF(rect.right() - 25, rect.center().y() - 8, 16, 16);
+}
+
+void MindMapNode::setExpanded(bool expanded)
+{
+    if (m_expanded == expanded) return;
+
+    m_expanded = expanded;
+
+    // 设置子节点可见性
+    for (MindMapNode* child : m_children) {
+        child->setVisible(expanded);
+        // 递归设置子节点的连接线可见性
+        for (Connection* conn : child->connections()) {
+            conn->setVisible(expanded);
+        }
+    }
+
+    // 设置直接连接线的可见性
+    for (Connection* conn : m_connections) {
+        if (conn->destinationNode() && conn->destinationNode()->parentNode() == this) {
+            conn->setVisible(expanded);
+        }
+    }
+
+    update();
+}
+
+void MindMapNode::toggleExpanded()
+{
+    setExpanded(!m_expanded);
 }
 
 void MindMapNode::setText(const QString& text)
@@ -162,4 +216,19 @@ QVariant MindMapNode::itemChange(GraphicsItemChange change, const QVariant& valu
         }
     }
     return QGraphicsItem::itemChange(change, value);
+}
+
+void MindMapNode::mousePressEvent(QGraphicsSceneMouseEvent* event)
+{
+    // 检查是否点击了展开/折叠按钮
+    if (event->button() == Qt::LeftButton && !m_children.isEmpty()) {
+        QRectF buttonRect = expandButtonRect();
+        if (buttonRect.contains(event->pos())) {
+            toggleExpanded();
+            event->accept();
+            return;
+        }
+    }
+
+    QGraphicsItem::mousePressEvent(event);
 }

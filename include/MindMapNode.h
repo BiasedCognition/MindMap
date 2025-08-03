@@ -6,6 +6,7 @@
 #include <QList>
 #include <QStyleOption>
 #include <QDir>
+#include <QPainterPath>
 
 class Connection;
 
@@ -43,12 +44,19 @@ public:
     MindMapNode* parentNode() const;
     bool isRoot() const;
 
+    // 折叠/展开功能
+    bool isExpanded() const { return m_expanded; }
+    void setExpanded(bool expanded);
+    void toggleExpanded();
+    QRectF expandButtonRect() const;
+
     // 类型标识
     enum { Type = UserType + 1 };
     int type() const override { return Type; }
 
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
+    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
 
 private:
     QString m_text;
@@ -56,6 +64,7 @@ private:
     QString m_folderPath;
     QList<MindMapNode*> m_children;
     QList<Connection*> m_connections;
+    bool m_expanded; // 是否展开子节点
 };
 
 #endif // MINDMAPNODE_H

@@ -29,6 +29,8 @@ private:
     QAction* m_deleteAction;
     QAction* m_zoomInAction;
     QAction* m_zoomOutAction;
+    QAction* m_expandAllAction;
+    QAction* m_collapseAllAction;
 };
 
 #endif // MAINWINDOW_H
