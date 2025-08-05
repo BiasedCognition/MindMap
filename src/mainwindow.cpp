@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget* parent)
     createStatusBar();
 
     // 设置窗口属性
-    setWindowTitle("树状结构思维导图 - 带折叠功能");
+    setWindowTitle("树状结构思维导图 - 带JSON存储");
     resize(1200, 800);
 
     // 初始提示

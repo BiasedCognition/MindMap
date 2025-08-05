@@ -19,7 +19,6 @@ public:
     // 节点操作
     void removeNode(MindMapNode* node);
     MindMapNode* addChildNode(MindMapNode* parent, const QString& text);
-    void recursiveSetExpanded(MindMapNode* node,bool expanded);
 
     // 获取根节点
     MindMapNode* rootNode() const { return m_rootNode; }
@@ -28,15 +27,22 @@ public:
     // 布局功能
     void updateLayout();
 
+    // 折叠/展开功能
+    void recursiveSave(MindMapNode* node);
+    void recursiveSetExpanded(MindMapNode* node, bool expanded);
+
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
 
 private:
+
+
     void showNodeContextMenu(MindMapNode* node, const QPoint& screenPos);
     void showSceneContextMenu(const QPoint& screenPos, const QPointF& scenePos);
 
     void recursiveLayout(MindMapNode* node, qreal x, qreal& y, int depth);
-
+    void recursiveLoadChildren(MindMapNode* parent);
+    void restoreConnections(MindMapNode* node);
 
     MindMapNode* m_rootNode; // 根节点
     QString m_mapPath;

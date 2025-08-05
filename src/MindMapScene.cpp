@@ -63,24 +63,78 @@ bool MindMapScene::openMap(const QString& path)
     addItem(m_rootNode);
     m_rootNode->setPos(0, 0);
 
-    // TODO: 递归加载子节点
+    // 递归加载子节点
+    recursiveLoadChildren(m_rootNode);
+
+    // 恢复连接
+    restoreConnections(m_rootNode);
 
     m_mapPath = path;
     updateLayout();
     return true;
 }
 
+void MindMapScene::recursiveLoadChildren(MindMapNode* parent)
+{
+    if (!parent) return;
+
+    QDir parentDir(parent->folderPath());
+    QFileInfoList entries = parentDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+
+    for (const QFileInfo& entry : entries) {
+        if (entry.isDir()) {
+            QString childPath = entry.absoluteFilePath();
+
+            // 创建子节点
+            MindMapNode* child = new MindMapNode(entry.fileName(), childPath, parent);
+            addItem(child);
+
+            // 添加到父节点
+            parent->addChild(child);
+
+            // 递归加载子节点
+            recursiveLoadChildren(child);
+        }
+    }
+}
+
+void MindMapScene::restoreConnections(MindMapNode* node)
+{
+    if (!node) return;
+
+    // 加载节点的连接信息
+    node->loadFromJson();
+
+    // 递归处理子节点
+    for (MindMapNode* child : node->children()) {
+        restoreConnections(child);
+    }
+}
+
+void MindMapScene::recursiveSave(MindMapNode* node)
+{
+    if (!node) return;
+
+    // 保存当前节点
+    node->saveToJson();
+
+    // 递归保存子节点
+    for (MindMapNode* child : node->children()) {
+        recursiveSave(child);
+    }
+}
+
 bool MindMapScene::saveMap()
 {
-    if (m_mapPath.isEmpty()) {
-        QMessageBox::warning(nullptr, "警告", "请先创建或打开思维导图");
-        return false;
+    if (m_rootNode) {
+        // 递归保存所有节点
+        recursiveSave(m_rootNode);
+        return true;
     }
-
-    // 在严格树状结构中，文件系统结构就是我们的保存格式
-    // 这里可以添加元数据保存（如节点位置、颜色等）
-    return true;
+    return false;
 }
+
+
 
 void MindMapScene::updateLayout()
 {
@@ -91,7 +145,9 @@ void MindMapScene::updateLayout()
     recursiveLayout(m_rootNode, 0, y, 0);
 
     // 更新视图
-    views().first()->centerOn(m_rootNode);
+    if (!views().isEmpty()) {
+        views().first()->centerOn(m_rootNode);
+    }
 }
 
 void MindMapScene::recursiveLayout(MindMapNode* node, qreal x, qreal& y, int depth)
@@ -99,7 +155,7 @@ void MindMapScene::recursiveLayout(MindMapNode* node, qreal x, qreal& y, int dep
     if (!node->isExpanded()) return;
 
     // 设置当前节点位置
-    node->setPos(x, y);
+    node->setPosition(QPointF(x, y));
     y += 80; // 垂直间距
 
     // 布局子节点
@@ -260,6 +316,7 @@ void MindMapScene::showSceneContextMenu(const QPoint& screenPos, const QPointF& 
     }
     else if (selectedAction == saveAction) {
         saveMap();
+        QMessageBox::information(nullptr, "保存成功", "思维导图已保存到文件系统");
     }
     else if (selectedAction == expandAllAction && m_rootNode) {
         recursiveSetExpanded(m_rootNode, true);

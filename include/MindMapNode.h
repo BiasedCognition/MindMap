@@ -7,6 +7,7 @@
 #include <QStyleOption>
 #include <QDir>
 #include <QPainterPath>
+#include <QJsonObject>
 
 class Connection;
 
@@ -14,6 +15,7 @@ class MindMapNode : public QGraphicsItem
 {
 public:
     explicit MindMapNode(const QString& text, const QString& path, QGraphicsItem* parent = nullptr);
+    ~MindMapNode();
 
     // 重写图形项接口
     QRectF boundingRect() const override;
@@ -50,6 +52,16 @@ public:
     void toggleExpanded();
     QRectF expandButtonRect() const;
 
+    // JSON存储
+    void saveToJson();
+    void loadFromJson();
+    QJsonObject toJson() const;
+    void fromJson(const QJsonObject& json);
+
+    // 位置信息
+    void setPosition(const QPointF& pos);
+    QPointF position() const { return pos(); }
+
     // 类型标识
     enum { Type = UserType + 1 };
     int type() const override { return Type; }
@@ -65,6 +77,7 @@ private:
     QList<MindMapNode*> m_children;
     QList<Connection*> m_connections;
     bool m_expanded; // 是否展开子节点
+    bool m_loading;  // 是否正在加载中（防止保存循环）
 };
 
 #endif // MINDMAPNODE_H
