@@ -21,11 +21,21 @@ public:
     QRectF boundingRect() const override;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 
+    // JSON存储
+    QJsonObject getJson() const;
+    void applyJson(const QJsonObject& json);
+    void saveToJson();
+    void loadFromJson();
+    QJsonObject toJson() const;
+    void fromJson(const QJsonObject& json);
+    void changeJson(const QString& header, const QString& info, const QString& action);
+
     // 节点操作
     void setText(const QString& text);
     QString text() const;
     void setColor(const QColor& color);
     QColor color() const;
+    void addTag(const QString& tag);
 
     // 文件夹路径操作
     void setFolderPath(const QString& path);
@@ -34,7 +44,12 @@ public:
 
     // 子节点管理
     void addChild(MindMapNode* child);
-    void removeChild(MindMapNode* child);
+    void removeChild(const QString& name);
+    void removeAllChild();
+    void loadChild(const QString& name);
+    void loadAllChild();
+    void hideChild(MindMapNode* child);
+    void hideAllChild();
     QList<MindMapNode*> children() const;
 
     // 连接管理
@@ -52,11 +67,7 @@ public:
     void toggleExpanded();
     QRectF expandButtonRect() const;
 
-    // JSON存储
-    void saveToJson();
-    void loadFromJson();
-    QJsonObject toJson() const;
-    void fromJson(const QJsonObject& json);
+
 
     // 位置信息
     void setPosition(const QPointF& pos);
@@ -76,6 +87,7 @@ private:
     QString m_folderPath;
     QList<MindMapNode*> m_children;
     QList<Connection*> m_connections;
+    QList<QString> m_tags;
     bool m_expanded; // 是否展开子节点
     bool m_loading;  // 是否正在加载中（防止保存循环）
 };
